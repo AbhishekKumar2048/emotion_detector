@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Human Emotion Detection</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload an Image to Detect Emotion</h1>
+        <form action="/predict/" enctype="multipart/form-data" method="post">
+            <input type="file" name="file" accept=".jpg,.jpeg,.png" required>
+            <button type="submit">Detect Emotion</button>
+        </form>
+
+        {% if result %}
+            <div class="result">
+                <p><strong>Result:</strong> {{ result }}</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

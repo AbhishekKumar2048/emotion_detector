@@ -1,0 +1,9 @@
+emotion_app/
+├── vit_wndb_trial.keras         # Your trained model
+├── main.py                      # FastAPI backend
+├── requirements.txt             # Dependencies
+├── render.yaml                  # Render deployment config
+├── static/
+│   └── style.css
+└── templates/
+    └── index.html
