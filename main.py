@@ -3,17 +3,18 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from PIL import Image
-
-import io
 import numpy as np
-
 import tensorflow as tf
-
-
-from tf.keras.layers import Layer
-from tf.keras.models import Model
-
+import io
+import tensorflow as tf
+from keras.utils import image_dataset_from_directory as dfd
+import matplotlib.pyplot as plt
+import pandas as pd
+from tensorflow.keras.layers import Layer
+from tensorflow.keras.models import Model
+import torch
 from transformers import TFViTModel
+
 vit_model = TFViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
 
 from keras.saving import register_keras_serializable
@@ -23,69 +24,34 @@ def vit_forward(pixel_values):
 
 # Load model
 model=tf.keras.models.load_model('vit_wandb_final.keras', custom_objects={'vit_forward': vit_forward})
-# Define class labels
-class_labels = ['angry', 'happy', 'nothing', 'sad']
 
-# Initialize FastAPI
+# main.py
+
 app = FastAPI()
 
-# Mount static files and templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# Update with your actual class labels
+class_names = ['angry','happy','nothing','sad']
 
-# Image preprocessing function
-def preprocess_image(image: Image.Image) -> np.ndarray:
-    image = image.resize((224, 224))  # Resize to match model input
-    image = image.convert("RGB")
-    image_array = np.array(image).astype("float32") / 255.0
-    image_array = np.expand_dims(image_array, axis=0)  # Add batch dimension
-    return image_array
+from datetime import datetime
 
-# Serve HTML form
-@app.get("/", response_class=HTMLResponse)
-async def homepage(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "result": None})
+@app.post("/predict")
+async def predict(file: UploadFile = File(...), _ts: str = str(datetime.utcnow())):
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
 
-# Predict route for HTML form
-@app.post("/predict/")
-async def predict(request: Request, file: UploadFile = File(...)):
-    if not file.filename.lower().endswith((".jpg", ".jpeg", ".png")):
-        return templates.TemplateResponse("index.html", {
-            "request": request,
-            "result": "Only .jpg, .jpeg or .png files are allowed."
-        })
+    # Match your model's expected input size
+    image = image.resize((224,224))
+    img_array = np.array(image)
+    img_array = np.expand_dims(img_array, axis=0)
 
-    try:
-        contents = await file.read()
-        image = Image.open(io.BytesIO(contents))
-        input_tensor = preprocess_image(image)
-        predictions = model.predict(input_tensor)
-        predicted_class = class_labels[np.argmax(predictions)]
-        confidence = float(np.max(predictions))
-        result = f"Emotion: {predicted_class} (Confidence: {confidence:.2f})"
-    except Exception as e:
-        result = f"Error during prediction: {str(e)}"
+    # Prediction
+    predictions = model.predict(img_array)
+    print("Predictions:", predictions)
+    predicted_class = class_names[np.argmax(predictions)]
+    confidence = float(np.max(predictions))
 
-    return templates.TemplateResponse("index.html", {"request": request, "result": result})
-
-# JSON API route
-@app.post("/api/predict")
-async def api_predict(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith((".jpg", ".jpeg", ".png")):
-        raise HTTPException(status_code=400, detail="Only .jpg, .jpeg or .png files are supported.")
-
-    try:
-        contents = await file.read()
-        image = Image.open(io.BytesIO(contents))
-        input_tensor = preprocess_image(image)
-        predictions = model.predict(input_tensor)
-        predicted_class = class_labels[np.argmax(predictions)]
-        confidence = float(np.max(predictions))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
-
-    return JSONResponse(content={
+    return {
         "filename": file.filename,
-        "predicted_emotion": predicted_class,
-        "confidence": round(confidence, 4)
-    })
+        "prediction": predicted_class,
+        "confidence": confidence
+    }
