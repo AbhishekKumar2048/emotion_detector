@@ -8,7 +8,7 @@ python-multipart>=0.0.6  # For file uploads
 
 # === ML Core ===
 tensorflow==2.18.0       # Ensure compatibility with TFViTModel
-keras==3.9.0             # Newer Keras, should work with TF 2.18+
+keras==2.13.1             # Newer Keras, should work with TF 2.18+
 transformers==4.53.2     # For TFViTModel
 torch==2.6.0             # If needed for other models (optional)
 
