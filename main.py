@@ -51,3 +51,8 @@ async def predict(file: UploadFile = File(...), _ts: str = str(datetime.utcnow()
         "prediction": predicted_class,
         "confidence": confidence
     }
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))  # 8000 locally, dynamic on Render
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=port)
