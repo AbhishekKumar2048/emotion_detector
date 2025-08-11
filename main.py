@@ -26,6 +26,11 @@ def load_models():
     models_loaded = True
     print("✅ Models loaded.")
 
+@app.get("/")
+def read_root():
+    return {"status": "ok", "message": "Emotion detection API is running."}
+
+
 @app.on_event("startup")
 def startup_event():
     # Load in background so the app binds to the port instantly
