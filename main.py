@@ -6,8 +6,6 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 import io
-import tensorflow as tf
-from keras.utils import image_dataset_from_directory as dfd
 import matplotlib.pyplot as plt
 import pandas as pd
 from tensorflow.keras.layers import Layer
@@ -17,8 +15,6 @@ from transformers import TFViTModel
 
 vit_model = TFViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
 
-from keras.saving import register_keras_serializable
-@register_keras_serializable()
 def vit_forward(pixel_values):
     return vit_model(pixel_values=pixel_values)[0]
 
